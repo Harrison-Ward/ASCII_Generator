@@ -91,7 +91,7 @@ def main(image, n_cols, scale):
     print('generating ASCII art...')
     
     # convert image to ascii txt
-    outFile = 'out.txt'
+    outFile = f'main/output/out.txt'
  
     # open file
     f = open(outFile, 'w')
