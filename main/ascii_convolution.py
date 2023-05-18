@@ -88,12 +88,30 @@ def to_ascii(image, n_cols, scale, output):
     
     return output
 
+@timer
 def ascii_convl(image, kernel_size, output):
+    # take in the image and transform it into an array
+    print('loading array')
     image_array = np.flip(convert_to_gs(np.array(image)), axis=0)
 
-    avg_pool_2d = tf.keras.layers.AveragePooling2D(pool_size=(kernel_size, kernel_size), strides=(1, 1), padding='valid')
-    avg_array = avg_pool_2d(image_array)
-    print(avg_array)
+    # reshape the image so it is a valid 4D tensor for pooling
+    print('reshape array')
+    image_array = image_array.reshape(1, image_array.shape[0], image_array.shape[1], 1)
+
+    # average a neighborhood of pixels to get the luminosity of each tile
+    print('pooling')
+    avg_pool_2d = tf.keras.layers.AveragePooling2D(pool_size=(kernel_size, kernel_size), strides=None, padding='valid')
+    luminosity_array = np.asarray(avg_pool_2d(image_array))
+
+    # map luminosity values to chars in grayscale list
+    print('mapping')
+    char_map = lambda i: gs_dict[int((i*69)/255)]
+    mapping_function = np.vectorize(char_map)    
+    ascii_array = np.squeeze(mapping_function(luminosity_array))
+
+    # return the ascii array as text
+    print('saving')
+    return np.savetxt(f'output/{output}', ascii_array, fmt='%c')
 
 
 def main(n_cols, scale):
@@ -103,14 +121,15 @@ def main(n_cols, scale):
         fname, ftype = file.split('.')
         if fname != '' and ftype == 'jpeg':
             images.append((Image.open(f'{path}/{file}'), fname))
+            print(f'File: {file}\nShape: {images[-1][0].size}')
     
-    
-    for i, image_tuple in enumerate(images):
-        print('-'*100)
-        print(f'Image {i + 1} of {len(images)} loading:')
-        print(f'{image_tuple[1]}, rendering...')
-        to_ascii(image_tuple[0], n_cols, scale, f'{image_tuple[1]}_ascii.txt')
-        print(f'ASCII art written to output/{image_tuple[1]}_ascii.txt')
+    ascii_convl(images[0][0], 5, 'aaa.txt')
+    # for i, image_tuple in enumerate(images):
+    #     print('-'*100)
+    #     print(f'Image {i + 1} of {len(images)} loading:')
+    #     print(f'{image_tuple[1]}, rendering...')
+    #     to_ascii(image_tuple[0], n_cols, scale, f'{image_tuple[1]}_ascii.txt')
+    #     print(f'ASCII art written to output/{image_tuple[1]}_ascii.txt')
 
 
 
