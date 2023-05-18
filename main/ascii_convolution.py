@@ -8,8 +8,9 @@ path = '/Users/harrisonward/Desktop/CS/Git/pixelator/assets'
 
 # convert grey scale to dict to speed up look up
 gscale = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,\"^`'. "
-gs_dict = {index:value for (index, value) in enumerate(gscale)}
-gs_dict_inv = {index:value for (index, value) in enumerate(reversed(gscale))}
+gs_dict = {index: value for (index, value) in enumerate(gscale)}
+gs_dict_inv = {index: value for (index, value) in enumerate(reversed(gscale))}
+
 
 def avg_brightness(image_array):
     try:
@@ -17,8 +18,10 @@ def avg_brightness(image_array):
     except ValueError:
         return 0
 
+
 def convert_to_gs(image_array):
     return np.mean(np.asarray(image_array), axis=2)
+
 
 def timer(func):
     def wrap_func(*args, **kwargs):
@@ -29,9 +32,10 @@ def timer(func):
         return result
     return wrap_func
 
+
 @timer
 def to_ascii(image, n_cols, scale, output):
-    
+
     f = open(f'main/output/{output}', 'w')
 
     image_array = np.flip(convert_to_gs(np.array(image)), axis=0)
@@ -46,17 +50,17 @@ def to_ascii(image, n_cols, scale, output):
     # tile width
     w = W / n_cols
 
-    # tile height 
+    # tile height
     h = w / scale
 
     n_rows = int(H/h)
 
     for i in range(n_rows):
         line = ''
-        
+
         # pixel number times tile height
         y1 = int(i * h)
-        
+
         # pixel one to the right
         # could probably add a % to handle the wrap around
         y2 = int((i+1)*h)
@@ -71,26 +75,27 @@ def to_ascii(image, n_cols, scale, output):
 
             if i == n_cols - 1:
                 x2 = W
-            
-            # slice the image array to get the tile 
+
+            # slice the image array to get the tile
             tile = image_array[x1:x2, y1:y2]
 
             # get the average brightness of the tile
             avg = avg_brightness(tile)
 
-            # look up and append the char 
+            # look up and append the char
             line += gs_dict[int((avg*69)/255)]
-        
-        # write each line to output   
+
+        # write each line to output
         f.write(line + '\n')
- 
+
     # cleanup
     f.close()
-    
+
     return output
 
+
 @timer
-def ascii_convl(image, kernel_size, output, invert:bool, negative:bool):
+def ascii_convl(image, kernel_size, output, invert: bool, negative: bool):
     # take in the image and transform it into an array
     image_array = convert_to_gs(np.array(image))
 
@@ -100,19 +105,21 @@ def ascii_convl(image, kernel_size, output, invert:bool, negative:bool):
             image_array = image_array.T
 
     # reshape the image so it is a valid 4D tensor for pooling
-    image_array = image_array.reshape(1, image_array.shape[0], image_array.shape[1], 1)
+    image_array = image_array.reshape(
+        1, image_array.shape[0], image_array.shape[1], 1)
 
     # average a neighborhood of pixels to get the luminosity of each tile
-    avg_pool_2d = tf.keras.layers.AveragePooling2D(pool_size=(kernel_size, kernel_size), strides=None, padding='valid')
+    avg_pool_2d = tf.keras.layers.AveragePooling2D(pool_size=(
+        kernel_size, kernel_size), strides=None, padding='valid')
     luminosity_array = np.asarray(avg_pool_2d(image_array))
 
     # map luminosity values to chars in grayscale list
     if negative:
-        char_map = lambda i: gs_dict_inv[int((i*69)/255)]
+        def char_map(i): return gs_dict_inv[int((i*69)/255)]
     else:
-        char_map = lambda i: gs_dict[int((i*69)/255)]
-    
-    mapping_function = np.vectorize(char_map)    
+        def char_map(i): return gs_dict[int((i*69)/255)]
+
+    mapping_function = np.vectorize(char_map)
     ascii_array = np.squeeze(mapping_function(luminosity_array))
 
     # return the ascii array as text
@@ -126,20 +133,15 @@ def main(kernel_size, invert=None, negative=None):
         fname, ftype = file.split('.')
         if fname != '' and ftype == 'jpeg':
             images.append((Image.open(f'{path}/{file}'), fname))
-    
 
     for i, image_tuple in enumerate(images):
         print('-'*100)
         print(f'Image {i + 1} of {len(images)} loading:')
         print(f'{image_tuple[1]}, of size {image_tuple[0].size} rendering...')
-        ascii_convl(image_tuple[0], kernel_size, f'{image_tuple[1]}_ascii.txt', invert, negative)
+        ascii_convl(image_tuple[0], kernel_size,
+                    f'{image_tuple[1]}_ascii.txt', invert, negative)
         print(f'ASCII art written to output/{image_tuple[1]}_ascii.txt')
-
-
 
 
 if __name__ == '__main__':
     main(25, invert=True, negative=True)
-
-
-
