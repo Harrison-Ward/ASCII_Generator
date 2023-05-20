@@ -12,13 +12,9 @@ gscale = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,\"^`'.
 # convert grey scale to dict to speed up look up, invert it for negative images
 gs_dict = {index: value for (index, value) in enumerate(gscale)}
 gs_dict_inv = {index: value for (index, value) in enumerate(reversed(gscale))}
-
-
+    
 def avg_brightness(image_array):
-    try:
-        return int(np.average(image_array, axis=None))
-    except ValueError:
-        return 0
+    return int(np.average(image_array, axis=None))
 
 
 def convert_to_gs(image_array):
@@ -42,7 +38,6 @@ def ascii_conv(image, kernel_size, output, invert: bool, negative: bool):
 
     if invert:
         if image_array.shape[1] > image_array.shape[0]:
-            print('Flipped')
             image_array = image_array.T
 
     # reshape the image so it is a valid 4D tensor for pooling
@@ -85,4 +80,4 @@ def main(kernel_size, invert=None, negative=None):
 
 
 if __name__ == '__main__':
-    main(25, invert=True, negative=True)
+    main(5, invert=False, negative=True)
