@@ -2,7 +2,7 @@ import numpy as np
 import os
 from PIL import Image
 from time import time
-import tensorflow as tf
+from tensorflow.keras.layers import AveragePooling2D
 
 path = '/Users/harrisonward/Desktop/CS/Git/pixelator/assets'
 
@@ -45,7 +45,9 @@ def ascii_conv(image, kernel_size, output, invert: bool, negative: bool):
         1, image_array.shape[0], image_array.shape[1], 1)
 
     # average a neighborhood of pixels to get the luminosity of each tile
-    avg_pool_2d = tf.keras.layers.AveragePooling2D(pool_size=(
+    # avg_pool_2d = tf.keras.layers.AveragePooling2D(pool_size=(
+    #     kernel_size, kernel_size), strides=None, padding='valid')
+    avg_pool_2d = AveragePooling2D(pool_size=(
         kernel_size, kernel_size), strides=None, padding='valid')
     luminosity_array = np.asarray(avg_pool_2d(image_array))
 
